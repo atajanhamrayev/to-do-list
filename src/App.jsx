@@ -1,124 +1,136 @@
-import { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-import toast, { Toaster } from 'react-hot-toast';
 
-function App() {
-	const [tasks, setTasks] = useState([]);
-	const [favorites, setFavorites] = useState([]);
-	const [inputValue, setInputValue] = useState('');
-	const [theme, setTheme] = useState('white');
-
+export default function App() {
 	useEffect(() => {
-		console.log('Effect');
-	}, [])
+		const localTasks = localStorage.getItem('tasks');
+		const localCompletedTasks = localStorage.getItem('completedTasks');
+		if (localTasks || localCompletedTasks) {
+			if (localTasks) {
+			const parsedTasks = JSON.parse(localTasks);
+			setTasks(parsedTasks);
+			}
+			if(localCompletedTasks){
+			const parsedCompletedTasks = JSON.parse(localCompletedTasks);
+			setCompletedTasks(parsedCompletedTasks)
+			}
+		}else {
+			const stringedTasks = JSON.stringify(tasks);
+			localStorage.setItem('tasks', stringedTasks);
 
-	console.log('not effect');
-
-	const handleAddToFavorite = (event, taskIndex, listType) => {
-		if (listType === 'task-list' && event.target.checked) {
-			const filteredArr = tasks.filter((item, index) => {
-				if (index === taskIndex) {
-					setFavorites([...favorites, item]);
-				} else {
-					return item;
-				}
-			});
-			setTasks(filteredArr);
-			event.target.checked = false;
-		}
-
-		if (listType === 'fav-list' && event.target.checked) {
-			const filteredArr = favorites.filter((item, index) => {
-				if (index === taskIndex) {
-					setTasks([...tasks, item]);
-				} else {
-					return item;
-				}
-			});
-			setFavorites(filteredArr);
-			event.target.checked = false;
-		}
-	};
-
-	const handleChangeInput = (event) => {
-		setInputValue(event.target.value);
-	};
-
-	const handleAddTask = () => {
-		if (inputValue !== '') {
-			const allTasks = [...tasks, ...favorites];
-
-			const isNotDuplicate = allTasks.every((task) => task !== inputValue);
-
-			if (isNotDuplicate) setTasks([...tasks, inputValue]);
-			else toast('Такая задача уже существует', {icon:'📃'})
-		} else{
-			toast('Write the text', { icon: '😈'});
+			const stringedCompletedTasks = JSON.stringify(completedTasks);
+			localStorage.setItem('completedTasks', stringedCompletedTasks);
 		}
 		
-	};
-	const toggleTheme = () => {
-		if (theme==='white') {
-			document.documentElement.style.setProperty(`--background`, `#282828`);
-			document.documentElement.style.setProperty('--text-color', '#fafafa');
-			document.documentElement.style.setProperty('--accent-color', '#a3a3a3');
-			setTheme('black')
+	}, []);
+
+	const [inputValue, setInputValue] = useState(''); 
+	const [tasks, setTasks] = useState([]);
+	const [completedTasks, setCompletedTasks] = useState([]);
+
+
+	const handleChangeInput = (event) => {
+		setInputValue(event.target.value)
+	}
+	const handleAddTask = () => {
+		if (inputValue !== '') {
+			const stringedTasks = JSON.stringify([...tasks, inputValue]);
+			localStorage.setItem('tasks', stringedTasks);
+			setTasks([...tasks, inputValue]);
+			setInputValue('');
 		}
 		else{
-			document.documentElement.style.setProperty('--background', '#fafafa');
-			document.documentElement.style.setProperty('--text-color', '#282828');
-			document.documentElement.style.setProperty('--accent-color', '#5c5c5c');	
-			setTheme('white')
+			alert('Write some text!'); //sghvckshcdbsdbcsdjcncsjnjndskjcbslhjbdc
 		}
+	};
+	const handleDelete = (taskIndex) => {
+		const filteredArr = tasks.filter((task, index) => {
+			return index !== taskIndex;
+		});
+		const filteredCompletedArr = completedTasks.filter((task, index) => {
+			return index+1+tasks.length !== taskIndex;
+		});
+
+		const stringedTasks = JSON.stringify(filteredArr);
+		localStorage.setItem('tasks', stringedTasks);
+		
+		const stringedCompletedTasks = JSON.stringify(filteredCompletedArr);
+		localStorage.setItem('completedTasks', stringedCompletedTasks);
+
+		setTasks(filteredArr);
+		setCompletedTasks(filteredCompletedArr);
 	}
 
-	return (
-		<div className='big-wrapper'>
-				<Toaster/>
-				<button onClick={toggleTheme} className='toggle'>Toggle Theme</button>
-				<div className='todo-wrapper'>
-					<div className='todo-actions'>
-						<input 
-							className='todo-input' 
-							type='text' 
-							value={inputValue} 
-							onChange={handleChangeInput} 
-							/>
-							<button className='todo-btn' onClick={handleAddTask}>Add</button>
-					</div>
-				<ol className='todo-list'>
-					{favorites.map(function (favTask, index) {
-						return (
-							<li key={index} className='items fav-item' >
-								{favTask}
-								<input
-									type='checkbox'
-									onChange={(event) =>
-										handleAddToFavorite(event, index, 'fav-list')
-									}
-									/>
-							</li>
-						);
-					})}
-					{tasks.map(function (task, index) {
-						return (
-							<li key={index} className='items list-item'>
-								{task}
-								<input
-									type='checkbox'
-									onChange={(event) =>
-										handleAddToFavorite(event, index, 'task-list')
-									}
-									/>
-							</li>
-						);
-					})}
-				</ol>
-			</div>
-		</div>
-	);
+	const handleChangeLi =(taskIndex) =>{
+		tasks.map((task, index) =>{
+			if(index===taskIndex){
+				const stringedCompletedTasks = JSON.stringify([...completedTasks, task]);
+				localStorage.setItem('completedTasks', stringedCompletedTasks)
+				setCompletedTasks([...completedTasks, task]);
+
+
+				const filteredArr = tasks.filter((task, index) => {
+					return index !== taskIndex;
+				});
+				const stringedTasks = JSON.stringify(filteredArr);
+				localStorage.setItem('tasks', stringedTasks);
+		
+				setTasks(filteredArr)
+			}
+		});
+
+		completedTasks.map((task, index) =>{
+			if(index+1+tasks.length===taskIndex){
+				const stringedTasks = JSON.stringify([...tasks, task]);
+				localStorage.setItem('tasks', stringedTasks)
+				setTasks([...tasks, task]);
+
+
+				const filteredArr = completedTasks.filter((task, index) => {
+					return index+1+tasks.length !== taskIndex;
+				});
+				const stringedCompletedTasks = JSON.stringify(filteredArr);
+				localStorage.setItem('completedTasks', stringedCompletedTasks);
+		
+				setCompletedTasks(filteredArr)
+			}
+		});
+		
+	}
 
 	
-}
+ 
+	return (
+		<div className='w-[360px] mx-auto my-[100px]  bg-[#f7f7f7] 
+		shadow-[0_0_3px_rgba(0,0,0,0.1)]'>
+			<div >
+				<h1 className='w-full bg-[#2980b9] text-white m-0 py-[10px] px-[20px] uppercase text-[24px] font-normal ' >To-Do List</h1>
+				<div className='flex flex-row h-[48px]'>
+					<input type="text" value={inputValue} onChange={handleChangeInput} 
+					className='text-[18px] bg-[#f7f7f7] w-[80%] py-[13px] pr-[13px] pl-[20px] box-border text-[#2980b9] 
+					focus:bg-[#fff] focus:border-[2px] focus:border-solid focus:border-[#2980b9] focus:outline-none'
+				 	placeholder='Add New Task...'/>
+					<button className='bg-[#2980b9] w-[20%] box-border h-full text-white' onClick={handleAddTask}>Add task</button>
+				</div>
+				
+			</div>
 
-export default App;
+			<ol className='m-0 p-0 '>
+				{tasks.map((todo, index)=>(
+					<li className='bg-[#fff] h-[40px] leading-[40px] flex  justify-between'   key={index}>
+						<span onClick={()=>handleChangeLi(index)}>{index+1}. {todo}</span>
+						<button className='px-2 font-medium border-2 border-[#29809b] inline-block hover:bg-[#29809b] hover:text-white transition-all ' onClick={() => handleDelete(index)} >🗑</button>
+						
+						
+					</li>
+				))}
+				{completedTasks.map((todo, index)=>(
+					<li className='bg-[#fff] h-[40px] leading-[40px] flex  justify-between'  key={index}>
+						<span onClick={()=>handleChangeLi(index+tasks.length+1)} className='line-through text-gray-500'>{index+tasks.length+1}. {todo}</span>
+						<button className='px-2 font-medium border-2 border-[#29809b] hover:bg-[#29809b]  hover:text-white transition-all ' onClick={() => handleDelete(index+tasks.length+1)} >🗑</button>
+					</li>
+				))}
+			</ol>
+		</div>
+	);
+}
